@@ -43,33 +43,48 @@ def allowed_file(filename):
 
 # ---------------- IMAGE TEXT EXTRACTION ----------------
 
+
+import requests
+
 def extract_image_text(image_path):
 
+    api_key = os.environ.get("OCR_API_KEY")
+
+    if not api_key:
+        raise ValueError("OCR API key is missing.")
+
     try:
-        image = Image.open(image_path)
+        with open(image_path, "rb") as image_file:
 
-        # Correct image orientation
-        image = ImageOps.exif_transpose(image)
+            response = requests.post(
+                "https://api.ocr.space/parse/image",
+                files={"file": image_file},
+                data={
+                    "apikey": api_key,
+                    "language": "eng",
+                    "isOverlayRequired": "false"
+                },
+                timeout=90
+            )
 
-        # Convert to RGB
-        image = image.convert("RGB")
+        response.raise_for_status()
+        result = response.json()
 
-        # Extract text using OCR
-        extracted_text = pytesseract.image_to_string(
-            image,
-            lang="eng"
+        if result.get("IsErroredOnProcessing"):
+            raise ValueError(
+                str(result.get("ErrorMessage", "OCR failed"))
+            )
+
+        extracted_text = "\n".join(
+            page.get("ParsedText", "")
+            for page in result.get("ParsedResults", [])
         )
 
         return extracted_text.strip()
 
-    except pytesseract.pytesseract.TesseractNotFoundError:
+    except requests.RequestException as e:
         raise ValueError(
-            "Tesseract OCR is not installed on the server."
-        )
-
-    except Exception as e:
-        raise ValueError(
-            "Unable to extract text from this image."
+            "OCR API request failed. Please try again."
         ) from e
 
 
