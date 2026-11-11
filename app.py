@@ -7,19 +7,70 @@ import tempfile
 import fitz
 import numpy as np
 import networkx as nx
+import pytesseract
 
+from PIL import Image, ImageOps
 from flask import Flask, render_template, request, flash
 from werkzeug.utils import secure_filename
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "text-summarizer-secret")
+
+app.secret_key = os.environ.get(
+    "SECRET_KEY", "text-summarizer-secret"
+)
 
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 
-ALLOWED_EXTENSIONS = {"pdf"}
+ALLOWED_EXTENSIONS = {
+    "pdf", "png", "jpg", "jpeg", "webp"
+}
+
+
+# ---------------- FILE VALIDATION ----------------
+
+def allowed_file(filename):
+
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower()
+        in ALLOWED_EXTENSIONS
+    )
+
+
+# ---------------- IMAGE TEXT EXTRACTION ----------------
+
+def extract_image_text(image_path):
+
+    try:
+        image = Image.open(image_path)
+
+        # Correct image orientation
+        image = ImageOps.exif_transpose(image)
+
+        # Convert to RGB
+        image = image.convert("RGB")
+
+        # Extract text using OCR
+        extracted_text = pytesseract.image_to_string(
+            image,
+            lang="eng"
+        )
+
+        return extracted_text.strip()
+
+    except pytesseract.pytesseract.TesseractNotFoundError:
+        raise ValueError(
+            "Tesseract OCR is not installed on the server."
+        )
+
+    except Exception as e:
+        raise ValueError(
+            "Unable to extract text from this image."
+        ) from e
 
 
 # ---------------- PDF TEXT EXTRACTION ----------------
@@ -29,23 +80,57 @@ def extract_pdf_text(pdf_path):
     text = []
 
     try:
-        doc = fitz.open(pdf_path)
 
-        if doc.is_encrypted:
-            doc.close()
-            raise ValueError("Password-protected PDFs are not supported.")
+        with fitz.open(pdf_path) as doc:
 
-        for page in doc:
-            page_text = page.get_text("text")
-            if page_text.strip():
-                text.append(page_text)
+            if doc.is_encrypted:
+                raise ValueError(
+                    "Password-protected PDFs are not supported."
+                )
 
-        doc.close()
+            for page in doc:
+
+                page_text = page.get_text("text").strip()
+
+                # Normal PDF text extraction
+                if page_text:
+                    text.append(page_text)
+
+                else:
+                    # OCR fallback for scanned PDF pages
+                    try:
+                        pix = page.get_pixmap(
+                            matrix=fitz.Matrix(2, 2),
+                            alpha=False
+                        )
+
+                        image = Image.frombytes(
+                            "RGB",
+                            [pix.width, pix.height],
+                            pix.samples
+                        )
+
+                        ocr_text = pytesseract.image_to_string(
+                            image,
+                            lang="eng"
+                        ).strip()
+
+                        if ocr_text:
+                            text.append(ocr_text)
+
+                    except pytesseract.pytesseract.TesseractNotFoundError:
+                        raise ValueError(
+                            "This PDF is scanned. Tesseract OCR "
+                            "is required to extract its text."
+                        )
 
     except ValueError:
         raise
+
     except Exception as e:
-        raise ValueError("Unable to read PDF file.") from e
+        raise ValueError(
+            "Unable to read this PDF file."
+        ) from e
 
     return "\n".join(text).strip()
 
@@ -55,10 +140,15 @@ def extract_pdf_text(pdf_path):
 def textrank_summarize(article, summary_length="medium"):
 
     # Step 1: Sentence splitting
-    sentences = re.split(r'(?<=[.!?])\s+', article.strip())
+    sentences = re.split(
+        r'(?<=[.!?])\s+',
+        article.strip()
+    )
 
     sentences = [
-        s.strip() for s in sentences if s.strip()
+        s.strip()
+        for s in sentences
+        if s.strip()
     ]
 
     if not sentences:
@@ -67,7 +157,7 @@ def textrank_summarize(article, summary_length="medium"):
     if len(sentences) <= 2:
         return " ".join(sentences)
 
-    # Step 2: Medium summary selection
+    # Step 2: Summary length
     ratios = {
         "short": 0.15,
         "medium": 0.30,
@@ -81,30 +171,47 @@ def textrank_summarize(article, summary_length="medium"):
         math.ceil(len(sentences) * ratio)
     )
 
-    num_sentences = min(num_sentences, len(sentences))
-
-    if len(sentences) <= num_sentences:
-        return " ".join(sentences)
+    num_sentences = min(
+        num_sentences,
+        len(sentences)
+    )
 
     # Step 3: TF-IDF
-    vectorizer = TfidfVectorizer(stop_words="english")
+    vectorizer = TfidfVectorizer(
+        stop_words="english"
+    )
 
     try:
-        sentence_vectors = vectorizer.fit_transform(sentences)
+        sentence_vectors = vectorizer.fit_transform(
+            sentences
+        )
+
     except ValueError:
-        return " ".join(sentences[:num_sentences])
+        return " ".join(
+            sentences[:num_sentences]
+        )
 
     # Step 4: Cosine Similarity
-    similarity_matrix = cosine_similarity(sentence_vectors)
+    similarity_matrix = cosine_similarity(
+        sentence_vectors
+    )
 
     # Step 5: Remove self-connections
-    np.fill_diagonal(similarity_matrix, 0)
+    np.fill_diagonal(
+        similarity_matrix,
+        0
+    )
 
     # Step 6: Create weighted graph
-    graph = nx.from_numpy_array(similarity_matrix)
+    graph = nx.from_numpy_array(
+        similarity_matrix
+    )
 
-    # Step 7: Apply PageRank
-    scores = nx.pagerank(graph, weight="weight")
+    # Step 7: PageRank
+    scores = nx.pagerank(
+        graph,
+        weight="weight"
+    )
 
     # Step 8: Rank sentences
     ranked_sentences = sorted(
@@ -119,7 +226,8 @@ def textrank_summarize(article, summary_length="medium"):
 
     # Step 9: Original sentence order
     summary = " ".join(
-        sentences[i] for i in selected_indices
+        sentences[i]
+        for i in selected_indices
     )
 
     return summary
@@ -128,16 +236,9 @@ def textrank_summarize(article, summary_length="medium"):
 # ---------------- WORD COUNT ----------------
 
 def word_count(text):
-    return len(re.findall(r"\b[\w'-]+\b", text))
 
-
-# ---------------- FILE VALIDATION ----------------
-
-def allowed_file(filename):
-
-    return (
-        "." in filename
-        and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    return len(
+        re.findall(r"\b[\w'-]+\b", text)
     )
 
 
@@ -153,53 +254,87 @@ def index():
         file = request.files.get("article")
 
         if not file or file.filename == "":
-            flash("Please upload a PDF document.")
+            flash("Please upload a PDF or image.")
             return render_template("index.html")
 
         filename = secure_filename(file.filename)
 
         if not allowed_file(filename):
-            flash("Only PDF files are supported.")
+            flash(
+                "Supported formats: PDF, PNG, JPG, JPEG and WEBP."
+            )
             return render_template("index.html")
+
+        extension = filename.rsplit(".", 1)[1].lower()
 
         temp_path = None
 
         try:
 
-            # Save temporary PDF
+            # Save temporary file
             with tempfile.NamedTemporaryFile(
-                suffix=".pdf", delete=False
+                suffix="." + extension,
+                delete=False
             ) as temp:
+
                 temp_path = temp.name
                 file.save(temp_path)
 
-            # Extract text
-            article_text = extract_pdf_text(temp_path)
+            # Extract text according to file type
+            if extension == "pdf":
 
-            if not article_text:
-                flash("No readable text found in PDF.")
+                article_text = extract_pdf_text(
+                    temp_path
+                )
+
+                file_type = "PDF Document"
+
+            else:
+
+                article_text = extract_image_text(
+                    temp_path
+                )
+
+                file_type = "Image"
+
+            if not article_text.strip():
+
+                flash(
+                    "No readable text found. "
+                    "Please upload a clearer document or image."
+                )
+
                 return render_template("index.html")
 
-            # Generate summary
+            # Generate summary using TextRank
             summary = textrank_summarize(
                 article_text,
                 summary_length="medium"
             )
 
-            # Statistics
-            original_words = word_count(article_text)
-            summary_words = word_count(summary)
+            # Calculate statistics
+            original_words = word_count(
+                article_text
+            )
+
+            summary_words = word_count(
+                summary
+            )
 
             compression = 0
 
             if original_words:
+
                 compression = round(
-                    (1 - summary_words / original_words) * 100,
+                    (
+                        1 - summary_words / original_words
+                    ) * 100,
                     2
                 )
 
             result = {
                 "filename": filename,
+                "file_type": file_type,
                 "original_text": article_text,
                 "summary": summary,
                 "original_words": original_words,
@@ -208,17 +343,28 @@ def index():
             }
 
         except ValueError as e:
+
             flash(str(e))
 
         except Exception:
-            app.logger.exception("PDF processing error")
-            flash("Something went wrong while processing the PDF.")
+
+            app.logger.exception(
+                "Document processing error"
+            )
+
+            flash(
+                "Something went wrong while processing the file."
+            )
 
         finally:
+
             if temp_path and os.path.exists(temp_path):
                 os.remove(temp_path)
 
-    return render_template("index.html", result=result)
+    return render_template(
+        "index.html",
+        result=result
+    )
 
 
 # ---------------- FILE SIZE ERROR ----------------
@@ -226,7 +372,9 @@ def index():
 @app.errorhandler(413)
 def file_too_large(error):
 
-    flash("PDF size must be less than 15 MB.")
+    flash(
+        "File size must be less than 15 MB."
+    )
 
     return render_template("index.html"), 413
 
