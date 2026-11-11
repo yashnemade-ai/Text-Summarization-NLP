@@ -28,6 +28,22 @@
             scroll-behavior: smooth;
         }
 
+        /* --- Hide Scrollbar Globally --- */
+        html, body, .magazine-wrapper, .summary-text, .overlay-content {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        html::-webkit-scrollbar, 
+        body::-webkit-scrollbar, 
+        .magazine-wrapper::-webkit-scrollbar,
+        .summary-text::-webkit-scrollbar,
+        .overlay-content::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+            width: 0px;
+            background: transparent;
+        }
+
         /* Updated Body to allow proper page scrolling */
         body {
             font-family: 'Inter', sans-serif;
@@ -491,9 +507,6 @@
             border: 1px solid #eee;
         }
 
-        .summary-text::-webkit-scrollbar { width: 6px; }
-        .summary-text::-webkit-scrollbar-thumb { background: var(--bg-main); border-radius: 4px; }
-
         .action-btns {
             margin-top: 25px;
             display: flex;
@@ -687,7 +700,7 @@
                     </h1>
 
                     <p class="hero-desc">
-                        Upload your PDF article and let our advanced TextRank algorithm extract the core essence instantly.
+                        Upload your PDF or Image file and let our advanced TextRank algorithm extract the core essence instantly.
                     </p>
 
                     <!-- Flash Messages -->
@@ -703,8 +716,9 @@
 
                     <form method="POST" enctype="multipart/form-data" id="uploadForm" class="upload-form">
                         <label class="file-upload-wrapper">
-                            <input type="file" name="article" id="article" accept=".pdf,application/pdf" required>
-                            <p>📄 Choose PDF or Drag & Drop</p>
+                            <!-- Updated to accept Images along with PDFs -->
+                            <input type="file" name="article" id="article" accept=".pdf, .jpg, .jpeg, .png, .webp, application/pdf, image/*" required>
+                            <p>📄 Choose PDF/Image or Drag & Drop</p>
                             <span class="file-name" id="fileName">Max 15MB</span>
                         </label>
                         
