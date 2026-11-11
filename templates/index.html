@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextSummarizer AI — Step Flow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% macro render_step(step) %}
+<div class="step-card">
+    <div class="step-head">
+        <span class="step-num">{{ step.step }}</span>
+        <div class="step-title-wrap">
+            <h3>{{ step.title }}</h3>
+            <p class="step-desc">{{ step.description }}</p>
+        </div>
+    </div>
+
+    <div class="step-body">
+
+        {# ---- Step 1 : Sentences ---- #}
+        {% if step.type == 'sentences' %}
+        <ul class="sentence-list">
+            {% for s in step.data %}
+            <li><span class="idx">S{{ s.index + 1 }}</span><span>{{ s.text }}</span></li>
+            {% endfor %}
+        </ul>
+
+        {# ---- Step 2 : TF-IDF vectors ---- #}
+        {% elif step.type == 'vectors' %}
+        <div class="meta-row">
+            <span class="pill">Vocabulary: {{ step.data.vocab_size }}</span>
+            <span class="pill">Matrix shape: {{ step.data.shape[0] }} × {{ step.data.shape[1] }}</span>
+        </div>
+        <div class="vector-grid">
+            {% for row in step.data.rows %}
+            <div class="vector-card">
+                <div class="vector-title">
+                    <b>S{{ row.index + 1 }}</b> — {{ row.sentence[:80] }}{% if row.sentence|length > 80 %}…{% endif %}
+                </div>
+                <div class="tags">
+                    {% for f in row.features[:8] %}
+                    <span class="tag">{{ f.word }} <b>{{ '%.3f'|format(f.weight) }}</b></span>
+                    {% endfor %}
+                    {% if row.features|length == 0 %}
+                    <span class="empty-tag">(no tokens after stopwords)</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# ---- Step 3 / Step 4 : Matrix ---- #}
+        {% elif step.type == 'matrix' %}
+        <div class="matrix-wrap">
+            <table class="matrix">
+                <thead>
+                    <tr>
+                        <th></th>
+                        {% for s in step.data.sentences %}
+                        <th>S{{ s.index + 1 }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in step.data.matrix %}
+                    {% set row_idx = loop.index0 %}
+                    <tr>
+                        <th>S{{ row_idx + 1 }}</th>
+                        {% for val in row %}
+                        <td class="{% if val == 0 %}v0{% elif val >= 0.5 %}v3{% elif val >= 0.2 %}v2{% else %}v1{% endif %}">
+                            {{ '%.2f'|format(val) }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ---- Step 5 : Graph ---- #}
+        {% elif step.type == 'graph' %}
+        <div class="meta-row">
+            <span class="pill">Nodes: {{ step.data.nodes|length }}</span>
+            <span class="pill">Edges: {{ step.data.edges|length }}</span>
+        </div>
+        <div class="edge-list">
+            {% for e in step.data.edges %}
+            <span class="edge">S{{ e.u + 1 }} ↔ S{{ e.v + 1 }} <b>{{ '%.3f'|format(e.weight) }}</b></span>
+            {% endfor %}
+        </div>
+
+        {# ---- Step 6 : PageRank scores ---- #}
+        {% elif step.type == 'scores' %}
+        {% set max_score = step.data[0].score if step.data[0].score > 0 else 1 %}
+        <ul class="score-list">
+            {% for s in step.data %}
+            <li>
+                <div class="score-head">
+                    <span class="score-title">
+                        <b>S{{ s.index + 1 }}</b> — {{ s.sentence[:80] }}{% if s.sentence|length > 80 %}…{% endif %}
+                    </span>
+                    <b class="score-val">{{ '%.4f'|format(s.score) }}</b>
+                </div>
+                <div class="bar">
+                    <div class="fill" style="width: {{ ((s.score / max_score) * 100)|round(1) }}%"></div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        {# ---- Step 7 : Selection ---- #}
+        {% elif step.type == 'selected' %}
+        <div class="ranked-order">
+            {% for i in step.data.ranked %}
+            <span class="rank-chip {% if i in step.data.selected_original_order %}picked{% endif %}">
+                S{{ i + 1 }}
+            </span>
+            {% if not loop.last %}<span class="arrow">→</span>{% endif %}
+            {% endfor %}
+        </div>
+        <p class="note">Picked (top {{ step.data.top|length }}): original order =
+            [{% for i in step.data.selected_original_order %}S{{ i + 1 }}{% if not loop.last %}, {% endif %}{% endfor %}]
+        </p>
+        <ul class="select-list">
+            {% for s in step.data.sentences %}
+            <li class="{% if s.index in step.data.selected_original_order %}picked{% endif %}">
+                <span class="idx">S{{ s.index + 1 }}</span>
+                <span>{{ s.text }}</span>
+                {% if s.index in step.data.selected_original_order %}
+                <span class="badge">rank {{ step.data.ranked.index(s.index) + 1 }}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+
+        {# ---- Step 8 : Final summary ---- #}
+        {% elif step.type == 'summary' %}
+        <div class="summary-box">{{ step.data }}</div>
+
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+<div class="app-shell">
+    <header class="hero">
+        <div class="badge">NLP Mini Project • LAB7 TextRank Flow</div>
+        <h1>TextSummarizer AI</h1>
+        <p>Har step ka live flow — sentence split → TF-IDF → cosine similarity → PageRank → summary.</p>
+    </header>
+
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="card upload-card">
+        <div class="upload-grid">
+            <label class="dropzone" for="fileInput">
+                <input type="file" id="fileInput" name="file" accept=".pdf,.png,.jpg,.jpeg" hidden>
+                <span class="upload-icon">📄</span>
+                <strong>Upload PDF / Image</strong>
+                <small id="fileName">PDF, JPG or PNG • Max 20MB</small>
+            </label>
+
+            <div class="or">OR</div>
+
+            <div class="text-area-wrap">
+                <label for="articleText">Paste article text</label>
+                <textarea id="articleText" name="text" placeholder="Article ka text yahan paste karo..."></textarea>
+            </div>
+        </div>
+
+        <div class="length-row">
+            <span>Summary Length</span>
+            <div class="chips">
+                <label class="chip">
+                    <input type="radio" name="length" value="short" {% if length == 'short' %}checked{% endif %}>
+                    Short (3 sentences)
+                </label>
+                <label class="chip">
+                    <input type="radio" name="length" value="medium" {% if length == 'medium' %}checked{% endif %}>
+                    Medium (5 sentences)
+                </label>
+                <label class="chip">
+                    <input type="radio" name="length" value="long" {% if length == 'long' %}checked{% endif %}>
+                    Long (8 sentences)
+                </label>
+            </div>
+        </div>
+
+        <button class="primary-btn" type="submit">Generate Summary & Show Flow</button>
+    </form>
+
+    {% if result %}
+    <section class="results">
+        <div class="stats">
+            <div class="stat-box">
+                <span>{{ original|length }}</span>
+                <small>Original Characters</small>
+            </div>
+            <div class="stat-box">
+                <span>{{ result.summary|length }}</span>
+                <small>Summary Characters</small>
+            </div>
+            <div class="stat-box">
+                <span>{{ result.num_sentences }}</span>
+                <small>Total Sentences</small>
+            </div>
+            <div class="stat-box">
+                <span>{{ ((1 - (result.summary|length) / (original|length or 1)) * 100)|round(1) }}%</span>
+                <small>Compression</small>
+            </div>
+        </div>
+
+        <h2 class="flow-heading">🔍 Algorithm Flow — Step by Step</h2>
+
+        <div class="step-flow">
+            {% for step in result.steps %}
+                {{ render_step(step) }}
+            {% endfor %}
+        </div>
+
+        <div class="download-row">
+            <a class="secondary-btn" href="{{ url_for('download_txt') }}">Download TXT</a>
+            <a class="secondary-btn" href="{{ url_for('download_pdf') }}">Download PDF</a>
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
