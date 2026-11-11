@@ -3,232 +3,697 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TextSummarizer AI — Step Flow</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>TextSummarizer AI</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --bg-color: #f4f6fc;
+            --text-color: #202943;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --primary: #5367e8;
+            --primary-hover: #4054d5;
+            --border: #e5e7eb;
+            --upload-bg: #fafbff;
+            --upload-border: #aab5d5;
+            --stat-bg: #f3f5ff;
+            --summary-bg: #f8f9ff;
+            --summary-border: #e1e5ff;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Variables */
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --card-bg: #1e293b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --border: #334155;
+            --upload-bg: #0f172a;
+            --upload-border: #475569;
+            --stat-bg: #334155;
+            --summary-bg: #1e293b;
+            --summary-border: #334155;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: var(--card-bg);
+            padding: 18px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h2 {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(90deg, var(--primary), #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        header span {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            display: none;
+        }
+
+        @media(min-width: 600px) {
+            header span { display: block; }
+        }
+
+        .theme-toggle {
+            background: var(--stat-bg);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            line-height: 1.2;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(90deg, var(--primary), #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-color);
+        }
+
+        /* Upload Box */
+        .upload-box {
+            border: 2px dashed var(--upload-border);
+            border-radius: 14px;
+            padding: 45px 20px;
+            text-align: center;
+            background: var(--upload-bg);
+            transition: 0.3s ease;
+            position: relative;
+        }
+
+        .upload-box:hover {
+            border-color: var(--primary);
+            background: var(--card-bg);
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .upload-box h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .upload-box input[type="file"] {
+            display: block;
+            margin: 20px auto 10px;
+            max-width: 100%;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .upload-box input[type="file"]::file-selector-button {
+            background: var(--stat-bg);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: 0.2s;
+            margin-right: 15px;
+        }
+
+        .upload-box input[type="file"]::file-selector-button:hover {
+            background: var(--border);
+        }
+
+        .upload-box p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        #fileName {
+            font-weight: 600;
+            color: var(--primary) !important;
+            margin-top: 15px;
+        }
+
+        /* Settings Grid */
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--stat-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .settings div p {
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .settings div strong {
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        /* Buttons */
+        button.primary-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border: none;
+            padding: 16px;
+            color: white;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(83, 103, 232, 0.3);
+        }
+
+        button.primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(83, 103, 232, 0.4);
+        }
+
+        button.primary-btn:disabled {
+            opacity: 0.7;
+            cursor: wait;
+            transform: none;
+        }
+
+        /* Alerts */
+        .alert {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            border-left: 4px solid #ef4444;
+        }
+
+        [data-theme="dark"] .alert {
+            background: #451a1a;
+            color: #fca5a5;
+            border-left-color: #ef4444;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .stat {
+            background: var(--stat-bg);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat p {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .stat h2 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 28px;
+            justify-content: center;
+        }
+
+        /* Summary Output */
+        .summary-container {
+            background: var(--summary-bg);
+            border: 1px solid var(--summary-border);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .summary-container h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-text {
+            line-height: 1.8;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 15px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: #15966c;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover { background: #087b57; transform: translateY(-1px); }
+
+        .btn-dark {
+            flex: 1;
+            background: var(--text-color);
+            color: var(--bg-color);
+            text-decoration: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-dark:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Details / Original Text */
+        .original {
+            margin-top: 25px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card-bg);
+        }
+
+        .original summary {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .original p {
+            padding: 0 20px 20px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            max-height: 350px;
+            overflow-y: auto;
+            line-height: 1.7;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* How it works */
+        .how-it-works {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--stat-bg);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .step-num {
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 30px;
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            background: var(--card-bg);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media(max-width: 600px) {
+            .hero h1 { font-size: 32px; }
+            .stats { grid-template-columns: 1fr; gap: 15px; }
+            .card { padding: 25px 20px; }
+            .action-buttons { flex-direction: column; }
+        }
+    </style>
 </head>
-<body>
-{% macro render_step(step) %}
-<div class="step-card">
-    <div class="step-head">
-        <span class="step-num">{{ step.step }}</span>
-        <div class="step-title-wrap">
-            <h3>{{ step.title }}</h3>
-            <p class="step-desc">{{ step.description }}</p>
+
+<body data-theme="light">
+
+    <header>
+        <h2>TextSummarizer AI</h2>
+        <div class="header-right">
+            <span>NLP Powered Summarization</span>
+            <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
         </div>
-    </div>
-
-    <div class="step-body">
-
-        {# ---- Step 1 : Sentences ---- #}
-        {% if step.type == 'sentences' %}
-        <ul class="sentence-list">
-            {% for s in step.data %}
-            <li><span class="idx">S{{ s.index + 1 }}</span><span>{{ s.text }}</span></li>
-            {% endfor %}
-        </ul>
-
-        {# ---- Step 2 : TF-IDF vectors ---- #}
-        {% elif step.type == 'vectors' %}
-        <div class="meta-row">
-            <span class="pill">Vocabulary: {{ step.data.vocab_size }}</span>
-            <span class="pill">Matrix shape: {{ step.data.shape[0] }} × {{ step.data.shape[1] }}</span>
-        </div>
-        <div class="vector-grid">
-            {% for row in step.data.rows %}
-            <div class="vector-card">
-                <div class="vector-title">
-                    <b>S{{ row.index + 1 }}</b> — {{ row.sentence[:80] }}{% if row.sentence|length > 80 %}…{% endif %}
-                </div>
-                <div class="tags">
-                    {% for f in row.features[:8] %}
-                    <span class="tag">{{ f.word }} <b>{{ '%.3f'|format(f.weight) }}</b></span>
-                    {% endfor %}
-                    {% if row.features|length == 0 %}
-                    <span class="empty-tag">(no tokens after stopwords)</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        {# ---- Step 3 / Step 4 : Matrix ---- #}
-        {% elif step.type == 'matrix' %}
-        <div class="matrix-wrap">
-            <table class="matrix">
-                <thead>
-                    <tr>
-                        <th></th>
-                        {% for s in step.data.sentences %}
-                        <th>S{{ s.index + 1 }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in step.data.matrix %}
-                    {% set row_idx = loop.index0 %}
-                    <tr>
-                        <th>S{{ row_idx + 1 }}</th>
-                        {% for val in row %}
-                        <td class="{% if val == 0 %}v0{% elif val >= 0.5 %}v3{% elif val >= 0.2 %}v2{% else %}v1{% endif %}">
-                            {{ '%.2f'|format(val) }}
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        {# ---- Step 5 : Graph ---- #}
-        {% elif step.type == 'graph' %}
-        <div class="meta-row">
-            <span class="pill">Nodes: {{ step.data.nodes|length }}</span>
-            <span class="pill">Edges: {{ step.data.edges|length }}</span>
-        </div>
-        <div class="edge-list">
-            {% for e in step.data.edges %}
-            <span class="edge">S{{ e.u + 1 }} ↔ S{{ e.v + 1 }} <b>{{ '%.3f'|format(e.weight) }}</b></span>
-            {% endfor %}
-        </div>
-
-        {# ---- Step 6 : PageRank scores ---- #}
-        {% elif step.type == 'scores' %}
-        {% set max_score = step.data[0].score if step.data[0].score > 0 else 1 %}
-        <ul class="score-list">
-            {% for s in step.data %}
-            <li>
-                <div class="score-head">
-                    <span class="score-title">
-                        <b>S{{ s.index + 1 }}</b> — {{ s.sentence[:80] }}{% if s.sentence|length > 80 %}…{% endif %}
-                    </span>
-                    <b class="score-val">{{ '%.4f'|format(s.score) }}</b>
-                </div>
-                <div class="bar">
-                    <div class="fill" style="width: {{ ((s.score / max_score) * 100)|round(1) }}%"></div>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-
-        {# ---- Step 7 : Selection ---- #}
-        {% elif step.type == 'selected' %}
-        <div class="ranked-order">
-            {% for i in step.data.ranked %}
-            <span class="rank-chip {% if i in step.data.selected_original_order %}picked{% endif %}">
-                S{{ i + 1 }}
-            </span>
-            {% if not loop.last %}<span class="arrow">→</span>{% endif %}
-            {% endfor %}
-        </div>
-        <p class="note">Picked (top {{ step.data.top|length }}): original order =
-            [{% for i in step.data.selected_original_order %}S{{ i + 1 }}{% if not loop.last %}, {% endif %}{% endfor %}]
-        </p>
-        <ul class="select-list">
-            {% for s in step.data.sentences %}
-            <li class="{% if s.index in step.data.selected_original_order %}picked{% endif %}">
-                <span class="idx">S{{ s.index + 1 }}</span>
-                <span>{{ s.text }}</span>
-                {% if s.index in step.data.selected_original_order %}
-                <span class="badge">rank {{ step.data.ranked.index(s.index) + 1 }}</span>
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-
-        {# ---- Step 8 : Final summary ---- #}
-        {% elif step.type == 'summary' %}
-        <div class="summary-box">{{ step.data }}</div>
-
-        {% endif %}
-    </div>
-</div>
-{% endmacro %}
-
-
-<div class="app-shell">
-    <header class="hero">
-        <div class="badge">NLP Mini Project • LAB7 TextRank Flow</div>
-        <h1>TextSummarizer AI</h1>
-        <p>Har step ka live flow — sentence split → TF-IDF → cosine similarity → PageRank → summary.</p>
     </header>
 
-    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+    <div class="container">
 
-    <form method="POST" enctype="multipart/form-data" class="card upload-card">
-        <div class="upload-grid">
-            <label class="dropzone" for="fileInput">
-                <input type="file" id="fileInput" name="file" accept=".pdf,.png,.jpg,.jpeg" hidden>
-                <span class="upload-icon">📄</span>
-                <strong>Upload PDF / Image</strong>
-                <small id="fileName">PDF, JPG or PNG • Max 20MB</small>
-            </label>
+        <section class="hero">
+            <h1>Less Reading.<br><span>More Understanding.</span></h1>
+            <p>Upload your PDF article and automatically generate an intelligent summary using the TextRank algorithm.</p>
+        </section>
 
-            <div class="or">OR</div>
+        <!-- Flash Messages (Errors) -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">⚠️ {{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-            <div class="text-area-wrap">
-                <label for="articleText">Paste article text</label>
-                <textarea id="articleText" name="text" placeholder="Article ka text yahan paste karo..."></textarea>
+        <section class="card">
+            <h2>📄 Upload Your Document</h2>
+
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="upload-box">
+                    <span class="upload-icon">📥</span>
+                    <h3>Select PDF File</h3>
+                    <p>Drag & drop or click below to browse</p>
+                    <input type="file" name="article" id="article" accept=".pdf,application/pdf" required>
+                    <p>PDF format only | Maximum size 15 MB</p>
+                    <p id="fileName"></p>
+                </div>
+
+                <div class="settings">
+                    <div>
+                        <p>SUMMARY LENGTH</p>
+                        <strong>Medium (~30%)</strong>
+                    </div>
+                    <div>
+                        <p>ALGORITHM</p>
+                        <strong>TextRank</strong>
+                    </div>
+                    <div>
+                        <p>METHOD</p>
+                        <strong>Extractive NLP</strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="primary-btn" id="submitBtn">
+                    Generate Summary →
+                </button>
+            </form>
+        </section>
+
+
+        {% if result %}
+        <section class="card" id="results">
+            <h2>✨ Generated Summary</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+                Processed file: <strong>{{ result.filename }}</strong>
+            </p>
+
+            <div class="stats">
+                <div class="stat">
+                    <p>ORIGINAL WORDS</p>
+                    <h2>{{ result.original_words }}</h2>
+                </div>
+                <div class="stat">
+                    <p>SUMMARY WORDS</p>
+                    <h2>{{ result.summary_words }}</h2>
+                </div>
+                <div class="stat">
+                    <p>COMPRESSION</p>
+                    <h2>{{ result.compression }}%</h2>
+                </div>
             </div>
-        </div>
 
-        <div class="length-row">
-            <span>Summary Length</span>
-            <div class="chips">
-                <label class="chip">
-                    <input type="radio" name="length" value="short" {% if length == 'short' %}checked{% endif %}>
-                    Short (3 sentences)
-                </label>
-                <label class="chip">
-                    <input type="radio" name="length" value="medium" {% if length == 'medium' %}checked{% endif %}>
-                    Medium (5 sentences)
-                </label>
-                <label class="chip">
-                    <input type="radio" name="length" value="long" {% if length == 'long' %}checked{% endif %}>
-                    Long (8 sentences)
-                </label>
+            <div class="summary-container">
+                <h3>📝 AI Summary Result</h3>
+                <div class="summary-text" id="summaryText">{{ result.summary }}</div>
             </div>
-        </div>
 
-        <button class="primary-btn" type="submit">Generate Summary & Show Flow</button>
-    </form>
-
-    {% if result %}
-    <section class="results">
-        <div class="stats">
-            <div class="stat-box">
-                <span>{{ original|length }}</span>
-                <small>Original Characters</small>
+            <div class="action-buttons">
+                <button class="btn-secondary" type="button" onclick="copySummary()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                    Copy Summary
+                </button>
+                <a class="btn-dark" href="#" onclick="downloadSummary(); return false;">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    Download (.txt)
+                </a>
             </div>
-            <div class="stat-box">
-                <span>{{ result.summary|length }}</span>
-                <small>Summary Characters</small>
+
+            <details class="original">
+                <summary>View Original Extracted Text</summary>
+                <p>{{ result.original_text }}</p>
+            </details>
+        </section>
+        {% endif %}
+
+        <section class="card">
+            <h2>⚙️ How It Works</h2>
+            <div class="how-it-works">
+                <div class="step-item"><span class="step-num">1</span> PDF Text Extraction (OCR / PyMuPDF)</div>
+                <div class="step-item"><span class="step-num">2</span> TF-IDF Feature Extraction</div>
+                <div class="step-item"><span class="step-num">3</span> Cosine Similarity Calculation</div>
+                <div class="step-item"><span class="step-num">4</span> Sentence Graph Creation (NetworkX)</div>
+                <div class="step-item"><span class="step-num">5</span> PageRank Sentence Ranking</div>
+                <div class="step-item"><span class="step-num">6</span> Final Summary Generation</div>
             </div>
-            <div class="stat-box">
-                <span>{{ result.num_sentences }}</span>
-                <small>Total Sentences</small>
-            </div>
-            <div class="stat-box">
-                <span>{{ ((1 - (result.summary|length) / (original|length or 1)) * 100)|round(1) }}%</span>
-                <small>Compression</small>
-            </div>
-        </div>
+        </section>
 
-        <h2 class="flow-heading">🔍 Algorithm Flow — Step by Step</h2>
+    </div>
 
-        <div class="step-flow">
-            {% for step in result.steps %}
-                {{ render_step(step) }}
-            {% endfor %}
-        </div>
+    <footer>
+        TextSummarizer AI &copy; 2024 | Python | Flask | NLP | TextRank
+    </footer>
 
-        <div class="download-row">
-            <a class="secondary-btn" href="{{ url_for('download_txt') }}">Download TXT</a>
-            <a class="secondary-btn" href="{{ url_for('download_pdf') }}">Download PDF</a>
-        </div>
-    </section>
-    {% endif %}
-</div>
+    <script>
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+        // Check for saved theme in localStorage
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            body.setAttribute('data-theme', currentTheme);
+            themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // File Upload Name Display
+        const fileInput = document.getElementById("article");
+        if (fileInput) {
+            fileInput.addEventListener("change", function() {
+                const file = this.files[0];
+                if (file) {
+                    document.getElementById("fileName").textContent = "✅ Selected: " + file.name;
+                } else {
+                    document.getElementById("fileName").textContent = "";
+                }
+            });
+        }
+
+        // Form Submit Loading State
+        const uploadForm = document.getElementById("uploadForm");
+        if (uploadForm) {
+            uploadForm.addEventListener("submit", function() {
+                const btn = document.getElementById("submitBtn");
+                btn.disabled = true;
+                btn.innerHTML = "⏳ Processing PDF... Please wait";
+            });
+        }
+
+        // Copy Summary
+        function copySummary() {
+            const text = document.getElementById("summaryText").innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.btn-secondary');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "✅ Copied!";
+                btn.style.background = "#087b57";
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = "";
+                }, 2000);
+            }).catch(err => {
+                alert("Failed to copy text: " + err);
+            });
+        }
+
+        // Download Summary
+        function downloadSummary() {
+            const text = document.getElementById("summaryText").innerText;
+            const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "TextSummarizer_Summary.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
 </body>
 </html>
