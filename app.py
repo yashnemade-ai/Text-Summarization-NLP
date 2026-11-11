@@ -1,137 +1,242 @@
-import html
-import io
+
 import os
-import uuid
+import re
+import math
+import tempfile
 
-from flask import (
-    Flask, redirect, render_template, request, send_file, session, url_for,
-)
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+import fitz
+import numpy as np
+import networkx as nx
+
+from flask import Flask, render_template, request, flash
 from werkzeug.utils import secure_filename
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-from extractor import extract_text_from_file
-from summarizer import textrank_summarize
 
 app = Flask(__name__)
-app.secret_key = "change-this-secret-key"
+app.secret_key = os.environ.get("SECRET_KEY", "text-summarizer-secret")
 
-BASE_DIR = os.getcwd()
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
+ALLOWED_EXTENSIONS = {"pdf"}
 
-ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg"}
 
-# Length -> num_sentences (LAB7 uses num_sentences)
-LENGTH_MAP = {"short": 3, "medium": 5, "long": 8}
+# ---------------- PDF TEXT EXTRACTION ----------------
 
+def extract_pdf_text(pdf_path):
+
+    text = []
+
+    try:
+        doc = fitz.open(pdf_path)
+
+        if doc.is_encrypted:
+            doc.close()
+            raise ValueError("Password-protected PDFs are not supported.")
+
+        for page in doc:
+            page_text = page.get_text("text")
+            if page_text.strip():
+                text.append(page_text)
+
+        doc.close()
+
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError("Unable to read PDF file.") from e
+
+    return "\n".join(text).strip()
+
+
+# ---------------- TEXTRANK SUMMARIZATION ----------------
+
+def textrank_summarize(article, summary_length="medium"):
+
+    # Step 1: Sentence splitting
+    sentences = re.split(r'(?<=[.!?])\s+', article.strip())
+
+    sentences = [
+        s.strip() for s in sentences if s.strip()
+    ]
+
+    if not sentences:
+        return "No article text provided."
+
+    if len(sentences) <= 2:
+        return " ".join(sentences)
+
+    # Step 2: Medium summary selection
+    ratios = {
+        "short": 0.15,
+        "medium": 0.30,
+        "long": 0.50
+    }
+
+    ratio = ratios.get(summary_length, 0.30)
+
+    num_sentences = max(
+        2,
+        math.ceil(len(sentences) * ratio)
+    )
+
+    num_sentences = min(num_sentences, len(sentences))
+
+    if len(sentences) <= num_sentences:
+        return " ".join(sentences)
+
+    # Step 3: TF-IDF
+    vectorizer = TfidfVectorizer(stop_words="english")
+
+    try:
+        sentence_vectors = vectorizer.fit_transform(sentences)
+    except ValueError:
+        return " ".join(sentences[:num_sentences])
+
+    # Step 4: Cosine Similarity
+    similarity_matrix = cosine_similarity(sentence_vectors)
+
+    # Step 5: Remove self-connections
+    np.fill_diagonal(similarity_matrix, 0)
+
+    # Step 6: Create weighted graph
+    graph = nx.from_numpy_array(similarity_matrix)
+
+    # Step 7: Apply PageRank
+    scores = nx.pagerank(graph, weight="weight")
+
+    # Step 8: Rank sentences
+    ranked_sentences = sorted(
+        scores,
+        key=scores.get,
+        reverse=True
+    )
+
+    selected_indices = sorted(
+        ranked_sentences[:num_sentences]
+    )
+
+    # Step 9: Original sentence order
+    summary = " ".join(
+        sentences[i] for i in selected_indices
+    )
+
+    return summary
+
+
+# ---------------- WORD COUNT ----------------
+
+def word_count(text):
+    return len(re.findall(r"\b[\w'-]+\b", text))
+
+
+# ---------------- FILE VALIDATION ----------------
 
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    )
+
+
+# ---------------- HOME PAGE ----------------
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    original = ""
+
     result = None
-    error = None
-    length = "medium"
-    uploaded_name = None
 
     if request.method == "POST":
-        length = request.form.get("length", "medium")
-        text = request.form.get("text", "").strip()
-        file = request.files.get("file")
+
+        file = request.files.get("article")
+
+        if not file or file.filename == "":
+            flash("Please upload a PDF document.")
+            return render_template("index.html")
+
+        filename = secure_filename(file.filename)
+
+        if not allowed_file(filename):
+            flash("Only PDF files are supported.")
+            return render_template("index.html")
+
+        temp_path = None
 
         try:
-            if file and file.filename:
-                if not allowed_file(file.filename):
-                    raise ValueError("Sirf PDF, JPG, PNG files allowed hain.")
 
-                original_name = secure_filename(file.filename)
-                uploaded_name = original_name
-                unique_name = f"{uuid.uuid4().hex}_{original_name}"
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
-                file.save(save_path)
+            # Save temporary PDF
+            with tempfile.NamedTemporaryFile(
+                suffix=".pdf", delete=False
+            ) as temp:
+                temp_path = temp.name
+                file.save(temp_path)
 
-                text = extract_text_from_file(save_path)
+            # Extract text
+            article_text = extract_pdf_text(temp_path)
 
-            if not text or len(text.strip()) < 20:
-                raise ValueError(
-                    "Text extract nahi hua ya bahut chhota hai. Doosri file ya zyada text try karo."
+            if not article_text:
+                flash("No readable text found in PDF.")
+                return render_template("index.html")
+
+            # Generate summary
+            summary = textrank_summarize(
+                article_text,
+                summary_length="medium"
+            )
+
+            # Statistics
+            original_words = word_count(article_text)
+            summary_words = word_count(summary)
+
+            compression = 0
+
+            if original_words:
+                compression = round(
+                    (1 - summary_words / original_words) * 100,
+                    2
                 )
 
-            original = text.strip()
-            num_sentences = LENGTH_MAP.get(length, 5)
-            result = textrank_summarize(original, num_sentences=num_sentences)
+            result = {
+                "filename": filename,
+                "original_text": article_text,
+                "summary": summary,
+                "original_words": original_words,
+                "summary_words": summary_words,
+                "compression": compression
+            }
 
-            session["last_summary"] = result["summary"]
+        except ValueError as e:
+            flash(str(e))
 
-        except Exception as e:
-            error = str(e)
+        except Exception:
+            app.logger.exception("PDF processing error")
+            flash("Something went wrong while processing the PDF.")
 
-    return render_template(
-        "index.html",
-        original=original,
-        result=result,
-        error=error,
-        length=length,
-        uploaded_name=uploaded_name,
-    )
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
 
-
-@app.route("/download/txt")
-def download_txt():
-    summary = session.get("last_summary")
-    if not summary:
-        return redirect(url_for("index"))
-
-    return send_file(
-        io.BytesIO(summary.encode("utf-8")),
-        mimetype="text/plain",
-        as_attachment=True,
-        download_name="summary.txt",
-    )
+    return render_template("index.html", result=result)
 
 
-@app.route("/download/pdf")
-def download_pdf():
-    summary = session.get("last_summary")
-    if not summary:
-        return redirect(url_for("index"))
+# ---------------- FILE SIZE ERROR ----------------
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=A4,
-        rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40,
-    )
+@app.errorhandler(413)
+def file_too_large(error):
 
-    styles = getSampleStyleSheet()
-    story = [
-        Paragraph("TextSummarizer AI — Generated Summary", styles["Title"]),
-        Spacer(1, 0.25 * inch),
-    ]
+    flash("PDF size must be less than 15 MB.")
 
-    for para in summary.split("\n"):
-        if para.strip():
-            story.append(Paragraph(html.escape(para), styles["BodyText"]))
-            story.append(Spacer(1, 0.1 * inch))
+    return render_template("index.html"), 413
 
-    doc.build(story)
-    buffer.seek(0)
 
-    return send_file(
-        buffer,
-        mimetype="application/pdf",
-        as_attachment=True,
-        download_name="summary.pdf",
-    )
-
+# ---------------- RUN APPLICATION ----------------
 
 if __name__ == "__main__":
-    app.run(debug=True)
+
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=False
+    )
