@@ -12,53 +12,50 @@
     
     <style>
         :root {
-            /* Orange Gradient Background */
-            --bg-gradient: linear-gradient(135deg, #ff8c00 0%, #ff5e00 100%);
-            --bg-panel: rgba(255, 255, 255, 0.1);
+            --bg-main: #ff6b00; /* Vibrant Orange */
             --bg-card: #ffffff;
             --text-dark: #111111;
             --text-light: #ffffff;
             --text-muted: #555555;
-            --border-light: rgba(255, 255, 255, 0.25);
-            --radius: 16px;
+            --border-light: rgba(255, 255, 255, 0.3);
+            --radius: 12px;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            scroll-behavior: smooth; 
+            scroll-behavior: smooth;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg-gradient);
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            /* Slight radial glow for depth */
-            background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(0,0,0,0.1) 0%, transparent 40%),
-                              linear-gradient(135deg, #ff8c00 0%, #ff5e00 100%);
+            /* Removed the gradient overlay as requested */
+            background-image: url('https://wallpapercave.com/wp/wp14680390.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         /* Main Wrapper */
         .magazine-wrapper {
-            background: var(--bg-panel);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            /* Removed the semi-transparent background and blur so the wallpaper shows through clearly */
+            background-color: transparent;
             width: 100%;
             max-width: 1200px;
             min-height: 800px;
-            border-radius: 24px;
+            border-radius: 16px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3); /* Slightly lighter shadow */
             display: flex;
-            border: 1px solid var(--border-light);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
         /* Right Sidebar */
@@ -107,8 +104,7 @@
 
         .social-icon:hover {
             background: var(--text-light);
-            color: #ff5e00;
-            transform: scale(1.1);
+            color: var(--bg-main);
         }
 
         /* Main Content Area */
@@ -152,7 +148,7 @@
         }
 
         nav a {
-            color: rgba(255,255,255,0.8);
+            color: var(--text-light);
             text-decoration: none;
             font-size: 14px;
             font-weight: 700;
@@ -165,14 +161,14 @@
         }
 
         nav a:hover, nav a.active {
-            color: var(--text-light);
-            border-bottom: 2px solid var(--text-light);
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--text-dark);
         }
 
         /* Hero Section */
         .hero-split {
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
+            grid-template-columns: 1fr 1fr;
             gap: 40px;
             flex: 1;
             align-items: center;
@@ -231,6 +227,7 @@
             line-height: 1.6;
             max-width: 400px;
             margin-bottom: 30px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Added for readability */
         }
 
         /* Upload Form */
@@ -283,7 +280,7 @@
 
         .btn-submit {
             background: var(--text-light);
-            color: #ff5e00;
+            color: var(--bg-main);
             border: none;
             padding: 18px;
             font-family: 'Oswald', sans-serif;
@@ -310,7 +307,7 @@
             transform: none;
         }
 
-        /* Right Side Visual (Image Card) */
+        /* Right Side Visual */
         .hero-visual {
             position: relative;
             height: 100%;
@@ -322,7 +319,7 @@
         .big-back-text {
             position: absolute;
             bottom: 0;
-            right: 0;
+            left: -50px;
             font-family: 'Syne', sans-serif;
             font-size: 120px;
             font-weight: 800;
@@ -334,34 +331,66 @@
             z-index: 1;
         }
 
+        /* Updated Visual Graphic Card to match Image 3 */
         .visual-graphic {
-            width: 100%;
-            max-width: 350px;
+            width: 320px;
             height: 380px;
             position: relative;
             z-index: 2;
             background: var(--bg-card);
-            border-radius: 20px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
-            padding: 15px;
-            transform: rotate(4deg);
+            padding: 35px 30px;
+            transform: rotate(5deg);
             transition: transform 0.4s ease;
             animation: float 6s ease-in-out infinite;
-            overflow: hidden;
         }
 
         .visual-graphic:hover {
-            transform: rotate(0deg) scale(1.03);
+            transform: rotate(0deg) scale(1.02);
         }
 
-        /* The Image inside the graphic card */
-        .visual-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 12px;
+        .graphic-header {
+            margin-bottom: 30px;
+        }
+
+        .graphic-header h4 {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .graphic-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sk-line { 
+            height: 12px; 
+            background: #f0f0f0; 
+            border-radius: 6px; 
+        }
+        .sk-line.w-90 { width: 90%; }
+        .sk-line.w-80 { width: 80%; }
+        .sk-line.w-95 { width: 95%; }
+        .sk-line.highlight { 
+            background: var(--bg-main); 
+            width: 40%; 
+            margin-top: 25px; 
+        }
+
+        .graphic-footer {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin-top: auto;
         }
 
         /* Paging */
@@ -372,7 +401,6 @@
             font-family: 'Oswald', sans-serif;
             font-size: 13px;
             letter-spacing: 1px;
-            margin-top: 20px;
         }
 
         .paging span { opacity: 0.5; }
@@ -392,7 +420,7 @@
             font-family: 'Oswald', sans-serif;
             font-size: 28px;
             text-transform: uppercase;
-            color: #ff5e00;
+            color: var(--bg-main);
             margin-bottom: 20px;
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
@@ -408,7 +436,7 @@
             background: #f9f9f9;
             padding: 20px;
             border-radius: 8px;
-            border-left: 4px solid #ff5e00;
+            border-left: 4px solid var(--bg-main);
         }
 
         .info-card h3 {
@@ -431,7 +459,7 @@
             border-radius: var(--radius);
             animation: slideUp 0.6s ease;
             margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         .result-section h3 {
@@ -439,7 +467,7 @@
             font-size: 24px;
             margin-bottom: 20px;
             text-transform: uppercase;
-            color: #ff5e00;
+            color: var(--bg-main);
         }
 
         .stats-row {
@@ -477,7 +505,7 @@
 
         .flow-step {
             background: #fff3e0;
-            color: #ff5e00;
+            color: var(--bg-main);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 13px;
@@ -485,13 +513,12 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            border: 1px solid rgba(255,94,0,0.2);
         }
 
         /* Bold Summary Text */
         .summary-text {
             font-size: 16px;
-            font-weight: 500; /* Slight Bold */
+            font-weight: 500;
             line-height: 1.8;
             color: var(--text-dark);
             white-space: pre-wrap;
@@ -504,7 +531,7 @@
         }
 
         .summary-text::-webkit-scrollbar { width: 6px; }
-        .summary-text::-webkit-scrollbar-thumb { background: #ff5e00; border-radius: 4px; }
+        .summary-text::-webkit-scrollbar-thumb { background: var(--bg-main); border-radius: 4px; }
 
         .action-btns {
             margin-top: 25px;
@@ -528,14 +555,14 @@
         .btn-copy { background: var(--text-dark); color: white; }
         .btn-copy:hover { background: #333; transform: translateY(-2px); }
         
-        .btn-download { background: #ff5e00; color: white; }
+        .btn-download { background: var(--bg-main); color: white; }
         .btn-download:hover { background: #e65c00; transform: translateY(-2px); }
 
         /* Animations */
         @keyframes float {
-            0% { transform: translateY(0) rotate(4deg); }
-            50% { transform: translateY(-15px) rotate(6deg); }
-            100% { transform: translateY(0) rotate(4deg); }
+            0% { transform: translateY(0) rotate(5deg); }
+            50% { transform: translateY(-15px) rotate(7deg); }
+            100% { transform: translateY(0) rotate(5deg); }
         }
 
         @keyframes slideUp {
@@ -592,7 +619,7 @@
                 <div class="logo">TEXT<span>SUMMARIZER</span></div>
                 <nav>
                     <ul>
-                        <li><a href="#home" class="active">Home</a></li>
+                        <li><a href="#home">Home</a></li>
                         <li><a href="#algorithm">Algorithm</a></li>
                         <li><a href="#nlp">NLP Techniques</a></li>
                     </ul>
@@ -648,12 +675,24 @@
                     </div>
                 </div>
 
-                <!-- Right Side Visual (Image Card) -->
                 <div class="hero-visual">
                     <div class="big-back-text">TEXT<br>RANK</div>
+                    
+                    <!-- Updated Card Structure matching Image 3 -->
                     <div class="visual-graphic">
-                        <!-- Added Background Image Here -->
-                        <img src="https://wallpapercave.com/wp/wp14680390.jpg" alt="AI Background" class="visual-image">
+                        <div class="graphic-header">
+                            <h4>NLP ENGINE</h4>
+                        </div>
+                        <div class="graphic-body">
+                            <div class="sk-line w-90"></div>
+                            <div class="sk-line w-80"></div>
+                            <div class="sk-line w-95"></div>
+                            <div class="sk-line w-80"></div>
+                            <div class="sk-line highlight"></div>
+                        </div>
+                        <div class="graphic-footer">
+                            Extracting key sentences...
+                        </div>
                     </div>
                 </div>
             </div>
@@ -750,7 +789,7 @@
                 if (this.files && this.files[0]) {
                     fileNameDisplay.textContent = this.files[0].name;
                     fileNameDisplay.style.color = "#ffffff";
-                    fileNameDisplay.style.background = "rgba(0,0,0,0.3)";
+                    fileNameDisplay.style.background = "rgba(0,0,0,0.2)";
                     fileNameDisplay.style.padding = "4px 8px";
                     fileNameDisplay.style.borderRadius = "4px";
                 } else {
