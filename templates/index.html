@@ -14,7 +14,7 @@
         :root {
             --bg-main: #ff6b00; /* Vibrant Orange */
             --bg-card: #ffffff;
-            --text-dark: #111111;
+            --text-dark: #d35400; /* Orange color for text */
             --text-light: #ffffff;
             --text-muted: #555555;
             --border-light: rgba(255, 255, 255, 0.3);
@@ -36,24 +36,24 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            /* Removed the gradient overlay as requested */
+            /* Outer Gradient Orange Background */
+            background: linear-gradient(135deg, #ff8c00, #ff4500);
+        }
+
+        /* Main Wrapper - Applied Image from Logo to End */
+        .magazine-wrapper {
+            /* Removed black overlay and blur, applied image directly */
             background-image: url('https://wallpapercave.com/wp/wp14680390.jpg');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
-        }
-
-        /* Main Wrapper */
-        .magazine-wrapper {
-            /* Removed the semi-transparent background and blur so the wallpaper shows through clearly */
-            background-color: transparent;
+            background-attachment: local;
             width: 100%;
             max-width: 1200px;
             min-height: 800px;
             border-radius: 16px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.3); /* Slightly lighter shadow */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
             display: flex;
             border: 1px solid rgba(255,255,255,0.2);
         }
@@ -72,7 +72,7 @@
             top: 0;
             bottom: 0;
             z-index: 10;
-            background: rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.1); /* Very subtle tint to separate sidebar */
         }
 
         .sidebar-line {
@@ -135,6 +135,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Added for readability on image */
         }
 
         .logo span {
@@ -158,6 +159,8 @@
             transition: 0.3s;
             padding-bottom: 5px;
             border-bottom: 2px solid transparent;
+            cursor: pointer;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Readability */
         }
 
         nav a:hover, nav a.active {
@@ -190,6 +193,7 @@
             align-items: center;
             gap: 15px;
             margin-bottom: 20px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         .section-num span {
@@ -214,20 +218,21 @@
             text-transform: uppercase;
             margin-bottom: 20px;
             letter-spacing: -1px;
+            text-shadow: 0 3px 10px rgba(0,0,0,0.4); /* Readability */
         }
 
         .main-title span {
             color: var(--text-dark);
-            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .hero-desc {
-            color: rgba(255,255,255,0.9);
+            color: rgba(255,255,255,0.95);
             font-size: 16px;
             line-height: 1.6;
             max-width: 400px;
             margin-bottom: 30px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Added for readability */
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4); /* Readability */
         }
 
         /* Upload Form */
@@ -239,14 +244,14 @@
 
         .file-upload-wrapper {
             position: relative;
-            border: 2px dashed rgba(255,255,255,0.5);
+            border: 2px dashed rgba(255,255,255,0.6);
             padding: 25px;
             border-radius: var(--radius);
             text-align: center;
             cursor: pointer;
             transition: 0.3s;
             background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px); /* Kept blur only for the input box for visibility */
         }
 
         .file-upload-wrapper:hover {
@@ -291,7 +296,7 @@
             cursor: pointer;
             border-radius: var(--radius);
             transition: 0.3s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         .btn-submit:hover {
@@ -324,14 +329,14 @@
             font-size: 120px;
             font-weight: 800;
             color: var(--text-light);
-            opacity: 0.1;
+            opacity: 0.15;
             line-height: 0.8;
             pointer-events: none;
             white-space: nowrap;
             z-index: 1;
         }
 
-        /* Updated Visual Graphic Card to match Image 3 */
+        /* Visual Graphic Card */
         .visual-graphic {
             width: 320px;
             height: 380px;
@@ -339,7 +344,7 @@
             z-index: 2;
             background: var(--bg-card);
             border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
             padding: 35px 30px;
@@ -406,52 +411,6 @@
         .paging span { opacity: 0.5; }
         .paging span.active { opacity: 1; font-weight: 700; color: var(--text-dark); }
 
-        /* New Sections (Algorithm & NLP) */
-        .info-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: var(--radius);
-            padding: 40px;
-            margin-bottom: 40px;
-            animation: slideUp 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .info-section h2 {
-            font-family: 'Oswald', sans-serif;
-            font-size: 28px;
-            text-transform: uppercase;
-            color: var(--bg-main);
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .grid-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .info-card {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid var(--bg-main);
-        }
-
-        .info-card h3 {
-            font-family: 'Oswald', sans-serif;
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: var(--text-dark);
-        }
-
-        .info-card p {
-            font-size: 14px;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
         /* Result Section */
         .result-section {
             background: var(--text-light);
@@ -459,7 +418,7 @@
             border-radius: var(--radius);
             animation: slideUp 0.6s ease;
             margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .result-section h3 {
@@ -553,10 +512,91 @@
         }
 
         .btn-copy { background: var(--text-dark); color: white; }
-        .btn-copy:hover { background: #333; transform: translateY(-2px); }
+        .btn-copy:hover { background: #b34700; transform: translateY(-2px); }
         
         .btn-download { background: var(--bg-main); color: white; }
         .btn-download:hover { background: #e65c00; transform: translateY(-2px); }
+
+        /* --- Modal Overlay for Info Sections --- */
+        .info-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .overlay-content {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: slideUp 0.4s ease;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px; right: 20px;
+            background: none; border: none;
+            font-size: 30px; cursor: pointer;
+            color: var(--text-dark);
+            transition: 0.3s;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: var(--bg-main);
+            transform: scale(1.1);
+        }
+
+        .info-section {
+            display: none;
+        }
+
+        .info-section h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 28px;
+            text-transform: uppercase;
+            color: var(--bg-main);
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--bg-main);
+        }
+
+        .info-card h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .info-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
 
         /* Animations */
         @keyframes float {
@@ -595,6 +635,7 @@
             nav ul { display: none; }
             .stats-row { flex-direction: column; gap: 15px; }
             .action-btns { flex-direction: column; }
+            .overlay-content { padding: 25px; }
         }
     </style>
 </head>
@@ -619,9 +660,9 @@
                 <div class="logo">TEXT<span>SUMMARIZER</span></div>
                 <nav>
                     <ul>
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#algorithm">Algorithm</a></li>
-                        <li><a href="#nlp">NLP Techniques</a></li>
+                        <li><a href="#" id="nav-home" class="active" onclick="closeSection()">Home</a></li>
+                        <li><a href="#" id="nav-algo" onclick="openSection('algorithm')">Algorithm</a></li>
+                        <li><a href="#" id="nav-nlp" onclick="openSection('nlp')">NLP Techniques</a></li>
                     </ul>
                 </nav>
             </header>
@@ -678,7 +719,7 @@
                 <div class="hero-visual">
                     <div class="big-back-text">TEXT<br>RANK</div>
                     
-                    <!-- Updated Card Structure matching Image 3 -->
+                    <!-- NLP Engine Card -->
                     <div class="visual-graphic">
                         <div class="graphic-header">
                             <h4>NLP ENGINE</h4>
@@ -737,7 +778,14 @@
                 </div>
             </div>
             {% endif %}
+        </div>
+    </div>
 
+    <!-- Info Sections Modal Overlay -->
+    <div id="infoOverlay" class="info-overlay">
+        <div class="overlay-content">
+            <button class="close-btn" onclick="closeSection()">×</button>
+            
             <!-- Algorithm Section -->
             <div class="info-section" id="algorithm">
                 <h2>Algorithms Used</h2>
@@ -775,7 +823,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -832,14 +879,28 @@
             URL.revokeObjectURL(url);
         }
 
-        // Navbar Active Link Highlighting
-        const navLinks = document.querySelectorAll('nav a');
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                navLinks.forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        // Modal Toggle Functions
+        function openSection(sectionId) {
+            document.getElementById('infoOverlay').style.display = 'flex';
+            document.getElementById('algorithm').style.display = 'none';
+            document.getElementById('nlp').style.display = 'none';
+            
+            document.querySelectorAll('nav a').forEach(l => l.classList.remove('active'));
+            
+            if (sectionId === 'algorithm') {
+                document.getElementById('algorithm').style.display = 'block';
+                document.getElementById('nav-algo').classList.add('active');
+            } else if (sectionId === 'nlp') {
+                document.getElementById('nlp').style.display = 'block';
+                document.getElementById('nav-nlp').classList.add('active');
+            }
+        }
+
+        function closeSection() {
+            document.getElementById('infoOverlay').style.display = 'none';
+            document.querySelectorAll('nav a').forEach(l => l.classList.remove('active'));
+            document.getElementById('nav-home').classList.add('active');
+        }
     </script>
 </body>
 </html>
