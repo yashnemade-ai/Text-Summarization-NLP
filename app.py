@@ -11,12 +11,16 @@ import numpy as np
 import networkx as nx
 import nltk
 
-from nltk import wordpunct_tokenize, pos_tag
+from flask import Flask, render_template, request, flash
+from werkzeug.utils import secure_filename
+
+from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 
-from flask import Flask, render_template, request, flash
-from werkzeug.utils import secure_filename
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 # ---------------- FLASK CONFIGURATION ----------------
 
@@ -30,25 +34,29 @@ app.secret_key = os.environ.get(
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 
 ALLOWED_EXTENSIONS = {
-    "pdf",
-    "png",
-    "jpg",
-    "jpeg",
-    "webp"
+    "pdf", "png", "jpg", "jpeg", "webp"
 }
 
 OCR_API_URL = "https://api.ocr.space/parse/image"
 
 logging.basicConfig(level=logging.INFO)
 
-# ---------------- NLTK RESOURCES ----------------
+
+# ---------------- NLTK CONFIGURATION ----------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-NLTK_DATA_DIR = os.path.join(BASE_DIR, "nltk_data")
+
+NLTK_DATA_DIR = os.path.join(
+    BASE_DIR,
+    "nltk_data"
+)
 
 nltk.data.path.insert(0, NLTK_DATA_DIR)
 
 lemmatizer = WordNetLemmatizer()
+
+
+# ---------------- POS TAG MAPPING ----------------
 
 def get_wordnet_pos(tag):
 
@@ -66,6 +74,7 @@ def get_wordnet_pos(tag):
 
     return wordnet.NOUN
 
+
 # ---------------- FILE VALIDATION ----------------
 
 def allowed_file(filename):
@@ -75,6 +84,7 @@ def allowed_file(filename):
         and filename.rsplit(".", 1)[1].lower()
         in ALLOWED_EXTENSIONS
     )
+
 
 # ---------------- OCR SPACE API ----------------
 
@@ -116,26 +126,35 @@ def extract_ocr_text(file_bytes, filename):
 
         if result.get("IsErroredOnProcessing"):
 
-            error = result.get("ErrorMessage", "OCR failed")
+            error = result.get(
+                "ErrorMessage",
+                "OCR processing failed."
+            )
 
             raise ValueError(str(error))
 
-        pages = result.get("ParsedResults", [])
+        parsed_results = result.get(
+            "ParsedResults",
+            []
+        )
 
         extracted_text = "\n".join(
             page.get("ParsedText", "")
-            for page in pages
+            for page in parsed_results
         )
 
         return extracted_text.strip()
 
     except requests.RequestException as e:
 
-        app.logger.exception("OCR API request failed")
+        app.logger.exception(
+            "OCR API request failed"
+        )
 
         raise ValueError(
             "OCR service is unavailable. Please try again."
         ) from e
+
 
 # ---------------- IMAGE TEXT EXTRACTION ----------------
 
@@ -151,6 +170,7 @@ def extract_image_text(image_path):
         image_bytes,
         filename
     )
+
 
 # ---------------- PDF TEXT EXTRACTION ----------------
 
@@ -170,7 +190,7 @@ def extract_pdf_text(pdf_path):
 
             for page_number, page in enumerate(doc):
 
-                # First try normal PDF text extraction
+                # First extract normal PDF text
                 page_text = page.get_text("text").strip()
 
                 if page_text:
@@ -200,20 +220,23 @@ def extract_pdf_text(pdf_path):
 
     except Exception as e:
 
-        app.logger.exception("PDF extraction failed")
+        app.logger.exception(
+            "PDF extraction failed"
+        )
 
         raise ValueError(
-            "Unable to read the PDF document."
+            "Unable to read this PDF document."
         ) from e
 
     return "\n\n".join(extracted_pages).strip()
+
 
 # ---------------- POS TAGGING + LEMMATIZATION ----------------
 
 def preprocess_sentence(sentence):
 
     # Step 1: Tokenization
-    words = wordpunct_tokenize(sentence)
+    words = word_tokenize(sentence)
 
     # Step 2: POS Tagging
     tagged_words = pos_tag(words)
@@ -234,23 +257,8 @@ def preprocess_sentence(sentence):
 
             processed_words.append(lemma)
 
-    return processed_words
+    return " ".join(processed_words)
 
-# ---------------- JACCARD SIMILARITY ----------------
-
-def jaccard_similarity(sentence1, sentence2):
-
-    set1 = set(sentence1)
-    set2 = set(sentence2)
-
-    if not set1 or not set2:
-        return 0.0
-
-    intersection = len(set1.intersection(set2))
-
-    union = len(set1.union(set2))
-
-    return intersection / union
 
 # ---------------- TEXTRANK SUMMARIZATION ----------------
 
@@ -281,7 +289,10 @@ def textrank_summarize(article, summary_length="medium"):
         "long": 0.50
     }
 
-    ratio = ratios.get(summary_length, 0.30)
+    ratio = ratios.get(
+        summary_length,
+        0.30
+    )
 
     num_sentences = max(
         2,
@@ -299,62 +310,65 @@ def textrank_summarize(article, summary_length="medium"):
         for sentence in sentences
     ]
 
-    # Step 4: Create Similarity Matrix using Jaccard
-    sentence_count = len(sentences)
-
-    similarity_matrix = np.zeros(
-        (sentence_count, sentence_count)
+    # Step 4: TF-IDF Vectorization
+    vectorizer = TfidfVectorizer(
+        stop_words="english"
     )
 
-    for i in range(sentence_count):
+    try:
 
-        for j in range(i + 1, sentence_count):
+        sentence_vectors = vectorizer.fit_transform(
+            processed_sentences
+        )
 
-            similarity = jaccard_similarity(
-                processed_sentences[i],
-                processed_sentences[j]
-            )
+    except ValueError:
 
-            similarity_matrix[i][j] = similarity
+        return " ".join(
+            sentences[:num_sentences]
+        )
 
-            similarity_matrix[j][i] = similarity
+    # Step 5: Cosine Similarity
+    similarity_matrix = cosine_similarity(
+        sentence_vectors
+    )
 
-    # Step 5: Remove Self Connections
+    # Step 6: Remove Self Connections
     np.fill_diagonal(
         similarity_matrix,
         0
     )
 
-    # Step 6: Create Weighted Graph
+    # Step 7: Create Weighted Graph
     graph = nx.from_numpy_array(
         similarity_matrix
     )
 
-    # Step 7: Apply PageRank
+    # Step 8: Apply PageRank
     scores = nx.pagerank(
         graph,
         weight="weight"
     )
 
-    # Step 8: Rank Sentences
+    # Step 9: Rank Sentences
     ranked_sentences = sorted(
         scores,
         key=scores.get,
         reverse=True
     )
 
-    # Step 9: Select Top Sentences
+    # Step 10: Select Top Sentences
     selected_indices = sorted(
         ranked_sentences[:num_sentences]
     )
 
-    # Step 10: Generate Summary in Original Order
+    # Step 11: Generate Summary in Original Order
     summary = " ".join(
         sentences[i]
         for i in selected_indices
     )
 
     return summary
+
 
 # ---------------- WORD COUNT ----------------
 
@@ -363,6 +377,7 @@ def word_count(text):
     return len(
         re.findall(r"\b[\w'-]+\b", text)
     )
+
 
 # ---------------- HOME PAGE ----------------
 
@@ -377,11 +392,15 @@ def index():
 
         if not file or file.filename == "":
 
-            flash("Please upload a PDF or image.")
+            flash(
+                "Please upload a PDF or image."
+            )
 
             return render_template("index.html")
 
-        filename = secure_filename(file.filename)
+        filename = secure_filename(
+            file.filename
+        )
 
         if not filename or not allowed_file(filename):
 
@@ -391,7 +410,9 @@ def index():
 
             return render_template("index.html")
 
-        extension = filename.rsplit(".", 1)[1].lower()
+        extension = filename.rsplit(
+            ".", 1
+        )[1].lower()
 
         temp_path = None
 
@@ -407,7 +428,7 @@ def index():
 
                 file.save(temp_path)
 
-            # Extract text based on file type
+            # Extract text according to file type
             if extension == "pdf":
 
                 article_text = extract_pdf_text(
@@ -428,18 +449,20 @@ def index():
 
                 flash(
                     "No readable text found. "
-                    "Please upload a clearer document."
+                    "Please upload a clearer document or image."
                 )
 
-                return render_template("index.html")
+                return render_template(
+                    "index.html"
+                )
 
-            # Generate TextRank summary
+            # Generate TextRank Summary
             summary = textrank_summarize(
                 article_text,
                 summary_length="medium"
             )
 
-            # Calculate statistics
+            # Calculate Statistics
             original_words = word_count(
                 article_text
             )
@@ -480,6 +503,17 @@ def index():
 
             flash(str(e))
 
+        except LookupError:
+
+            app.logger.exception(
+                "NLTK resource missing"
+            )
+
+            flash(
+                "Required NLTK resources are missing. "
+                "Please check the Render build command."
+            )
+
         except Exception:
 
             app.logger.exception(
@@ -501,6 +535,7 @@ def index():
         result=result
     )
 
+
 # ---------------- FILE SIZE ERROR ----------------
 
 @app.errorhandler(413)
@@ -510,7 +545,10 @@ def file_too_large(error):
         "File size must be less than 15 MB."
     )
 
-    return render_template("index.html"), 413
+    return render_template(
+        "index.html"
+    ), 413
+
 
 # ---------------- RUN APPLICATION ----------------
 
