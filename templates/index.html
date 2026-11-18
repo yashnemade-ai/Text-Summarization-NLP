@@ -12,9 +12,9 @@
     
     <style>
         :root {
-            --bg-main: #ff6b00; /* Vibrant Orange */
+            --bg-main: #ff6b00;
             --bg-card: #ffffff;
-            --text-dark: #FF7700; /* Orange color for general text */
+            --text-dark: #FF7700;
             --text-light: #ffffff;
             --text-muted: #555555;
             --border-light: rgba(255, 255, 255, 0.3);
@@ -28,10 +28,9 @@
             scroll-behavior: smooth;
         }
 
-        /* --- Hide Scrollbar Globally --- */
         html, body, .magazine-wrapper, .summary-text, .overlay-content {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
         
         html::-webkit-scrollbar, 
@@ -39,12 +38,11 @@
         .magazine-wrapper::-webkit-scrollbar,
         .summary-text::-webkit-scrollbar,
         .overlay-content::-webkit-scrollbar {
-            display: none; /* Chrome, Safari and Opera */
+            display: none;
             width: 0px;
             background: transparent;
         }
 
-        /* Updated Body to allow proper page scrolling */
         body {
             font-family: 'Inter', sans-serif;
             color: var(--text-dark);
@@ -52,11 +50,9 @@
             display: flex;
             flex-direction: column;
             padding: 20px;
-            /* Outer Gradient Orange Background */
             background: linear-gradient(135deg, #ff8c00, #ff4500);
         }
 
-        /* Main Wrapper - Centered and scrollable */
         .magazine-wrapper {
             background-image: url('https://wallpapercave.com/wp/wp14680390.jpg');
             background-size: cover;
@@ -65,17 +61,16 @@
             width: 100%;
             max-width: 1200px;
             min-height: 800px;
-            margin: auto; /* Centers the wrapper */
+            margin: auto;
             border-radius: 16px;
             position: relative;
-            overflow-x: hidden; /* Keeps rounded corners */
-            overflow-y: auto; /* Allows scrolling if content expands */
+            overflow-x: hidden;
+            overflow-y: auto;
             box-shadow: 0 30px 60px rgba(0,0,0,0.3);
             display: flex;
             border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* Right Sidebar */
         .sidebar {
             width: 80px;
             border-left: 1px solid var(--border-light);
@@ -124,7 +119,6 @@
             color: var(--bg-main);
         }
 
-        /* Main Content Area */
         .content-area {
             flex: 1;
             padding: 40px 60px;
@@ -135,7 +129,6 @@
             flex-direction: column;
         }
 
-        /* Header & Navigation */
         header {
             display: flex;
             justify-content: space-between;
@@ -185,7 +178,6 @@
             border-bottom: 2px solid var(--text-dark);
         }
 
-        /* Hero Section */
         .hero-split {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -252,7 +244,6 @@
             text-shadow: 0 1px 4px rgba(0,0,0,0.4);
         }
 
-        /* Upload Form */
         .upload-form {
             display: flex;
             flex-direction: column;
@@ -329,7 +320,6 @@
             transform: none;
         }
 
-        /* Right Side Visual */
         .hero-visual {
             position: relative;
             height: 100%;
@@ -353,7 +343,6 @@
             z-index: 1;
         }
 
-        /* Visual Graphic Card */
         .visual-graphic {
             width: 320px;
             height: 380px;
@@ -415,7 +404,6 @@
             margin-top: auto;
         }
 
-        /* Paging */
         .paging {
             display: flex;
             gap: 20px;
@@ -428,7 +416,6 @@
         .paging span { opacity: 0.5; }
         .paging span.active { opacity: 1; font-weight: 700; color: var(--text-dark); }
 
-        /* Result Section */
         .result-section {
             background: var(--text-light);
             padding: 30px;
@@ -436,7 +423,7 @@
             animation: slideUp 0.6s ease;
             margin-bottom: 40px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            outline: none; /* Removes outline when focused via JS */
+            outline: none;
         }
 
         .result-section h3 {
@@ -472,7 +459,6 @@
             font-family: 'Oswald', sans-serif;
         }
 
-        /* Flow Steps */
         .flow-steps {
             display: flex;
             flex-wrap: wrap;
@@ -492,12 +478,11 @@
             gap: 8px;
         }
 
-        /* Bold Summary Text */
         .summary-text {
             font-size: 16px;
-            font-weight: 700; /* Bold */
+            font-weight: 700;
             line-height: 1.8;
-            color: #111111; /* Bold Black */
+            color: #111111;
             white-space: pre-wrap;
             max-height: 300px;
             overflow-y: auto;
@@ -536,7 +521,6 @@
         .btn-clear { background: #6c757d; color: white; }
         .btn-clear:hover { background: #5a6268; transform: translateY(-2px); }
 
-        /* --- Modal Overlay for Info Sections --- */
         .info-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -617,7 +601,17 @@
             line-height: 1.6;
         }
 
-        /* Animations */
+        .info-card .code-tag {
+            display: inline-block;
+            background: #fff3e0;
+            color: var(--bg-main);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
         @keyframes float {
             0% { transform: translateY(0) rotate(5deg); }
             50% { transform: translateY(-15px) rotate(7deg); }
@@ -634,7 +628,6 @@
             to { opacity: 1; }
         }
 
-        /* Responsive */
         @media (max-width: 1024px) {
             .hero-split { grid-template-columns: 1fr; }
             .hero-visual { display: none; }
@@ -716,7 +709,6 @@
 
                     <form method="POST" enctype="multipart/form-data" id="uploadForm" class="upload-form">
                         <label class="file-upload-wrapper">
-                            <!-- Updated to accept Images along with PDFs -->
                             <input type="file" name="article" id="article" accept=".pdf, .jpg, .jpeg, .png, .webp, application/pdf, image/*" required>
                             <p>📄 Choose PDF/Image or Drag & Drop</p>
                             <span class="file-name" id="fileName">Max 15MB</span>
@@ -766,10 +758,11 @@
                 <!-- Step-by-Step Flow -->
                 <div class="flow-steps">
                     <div class="flow-step">1. Text Extracted (OCR)</div>
-                    <div class="flow-step">2. Sentences Split</div>
-                    <div class="flow-step">3. TF-IDF Applied</div>
-                    <div class="flow-step">4. Cosine Similarity</div>
-                    <div class="flow-step">5. PageRank Ranked</div>
+                    <div class="flow-step">2. Sentence Tokenization</div>
+                    <div class="flow-step">3. POS Tagging + Lemmatization</div>
+                    <div class="flow-step">4. TF-IDF Vectorization</div>
+                    <div class="flow-step">5. TextRank (PageRank) Scoring</div>
+                    <div class="flow-step">6. Top Sentences Selected</div>
                 </div>
 
                 <div class="stats-row">
@@ -787,7 +780,6 @@
                     </div>
                 </div>
 
-                <!-- Bold Black Summary -->
                 <div class="summary-text" id="summaryText">
                     {{ result.summary }}
                 </div>
@@ -813,15 +805,23 @@
                 <div class="grid-cards">
                     <div class="info-card">
                         <h3>TF-IDF Vectorizer</h3>
-                        <p>Term Frequency-Inverse Document Frequency converts sentences into mathematical vectors, highlighting important words while reducing the weight of common words.</p>
-                    </div>
-                    <div class="info-card">
-                        <h3>Cosine Similarity</h3>
-                        <p>Calculates the angle between two sentence vectors to find out how similar they are. If the angle is small, the sentences share similar meaning.</p>
+                        <p>Term Frequency-Inverse Document Frequency converts sentences into mathematical vectors. It highlights important words while reducing the weight of common words. Each sentence becomes a numeric vector representing its word importance.</p>
+                        <span class="code-tag">TfidfVectorizer(stop_words="english")</span>
                     </div>
                     <div class="info-card">
                         <h3>TextRank (PageRank)</h3>
-                        <p>Builds a graph where sentences are nodes and similarity is edges. It uses Google's PageRank algorithm to find the most central and important sentences.</p>
+                        <p>Builds a graph where sentences are nodes and similarity scores are edges. Uses Google's PageRank algorithm to find the most central and important sentences. Sentences with higher PageRank scores are considered more important.</p>
+                        <span class="code-tag">nx.pagerank(graph, weight="weight")</span>
+                    </div>
+                    <div class="info-card">
+                        <h3>POS Tagging</h3>
+                        <p>Part-of-Speech tagging identifies each word's grammatical role (noun, verb, adjective, etc.). This helps in accurate lemmatization and better text understanding before vectorization.</p>
+                        <span class="code-tag">nltk.pos_tag(words)</span>
+                    </div>
+                    <div class="info-card">
+                        <h3>Lemmatization</h3>
+                        <p>Reduces words to their base dictionary form using WordNet. For example, "running" → "run", "better" → "good". This normalizes text and improves similarity detection between sentences.</p>
+                        <span class="code-tag">WordNetLemmatizer().lemmatize()</span>
                     </div>
                 </div>
             </div>
@@ -832,15 +832,33 @@
                 <div class="grid-cards">
                     <div class="info-card">
                         <h3>Tokenization</h3>
-                        <p>Breaking down the large text paragraph into individual sentences and tokens (words) for easier processing.</p>
+                        <p>Breaking down the large text into individual sentences and tokens (words) for easier processing. Sentence tokenization splits text on punctuation like periods, exclamation marks, and question marks.</p>
+                        <span class="code-tag">nltk.word_tokenize()</span>
                     </div>
                     <div class="info-card">
                         <h3>Stop-word Removal</h3>
-                        <p>Filtering out common words like "is", "the", "and" which don't carry much meaning, to focus on important keywords.</p>
+                        <p>Filtering out common words like "is", "the", "and" which don't carry much meaning. This focuses the algorithm on important keywords and reduces noise in the similarity calculations.</p>
+                        <span class="code-tag">stop_words="english"</span>
                     </div>
                     <div class="info-card">
                         <h3>Extractive Summarization</h3>
-                        <p>Selecting the most important existing sentences from the original document rather than generating new text.</p>
+                        <p>Selecting the most important existing sentences from the original document rather than generating new text. This preserves the original meaning and ensures factual accuracy.</p>
+                        <span class="code-tag">Summary = Top-N ranked sentences</span>
+                    </div>
+                    <div class="info-card">
+                        <h3>POS Tag Mapping</h3>
+                        <p>Maps NLTK POS tags to WordNet POS tags (ADJ, VERB, NOUN, ADV) for accurate lemmatization. This ensures each word is reduced to its correct base form based on its grammatical role.</p>
+                        <span class="code-tag">get_wordnet_pos(tag)</span>
+                    </div>
+                    <div class="info-card">
+                        <h3>Weighted Graph Construction</h3>
+                        <p>Creates a graph from the similarity matrix where each sentence is a node and similarity scores are edge weights. Self-connections are removed to avoid bias in ranking.</p>
+                        <span class="code-tag">nx.from_numpy_array(similarity_matrix)</span>
+                    </div>
+                    <div class="info-card">
+                        <h3>Summary Length Control</h3>
+                        <p>Dynamically calculates the number of sentences to select based on the desired summary ratio (short: 15%, medium: 30%, long: 50%). Ensures a balanced summary length.</p>
+                        <span class="code-tag">num_sentences = ceil(len(sentences) * ratio)</span>
                     </div>
                 </div>
             </div>
@@ -848,19 +866,16 @@
     </div>
 
     <script>
-        // Auto-Scroll & Focus to Result Section on Page Load (After form submit)
         document.addEventListener('DOMContentLoaded', () => {
             const resultSection = document.getElementById('result');
             if (resultSection) {
-                // Small delay to allow the page to render completely first
                 setTimeout(() => {
-                    resultSection.focus(); // Gives focus to the section
+                    resultSection.focus();
                     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 300);
             }
         });
 
-        // File Upload Display
         const fileInput = document.getElementById("article");
         const fileNameDisplay = document.getElementById("fileName");
 
@@ -880,7 +895,6 @@
             });
         }
 
-        // Submit Loading State
         const uploadForm = document.getElementById("uploadForm");
         if (uploadForm) {
             uploadForm.addEventListener("submit", function() {
@@ -890,7 +904,6 @@
             });
         }
 
-        // Copy Functionality
         function copySummary() {
             const text = document.getElementById("summaryText").innerText;
             navigator.clipboard.writeText(text).then(() => {
@@ -898,7 +911,6 @@
             });
         }
 
-        // Download Functionality
         function downloadSummary() {
             const text = document.getElementById("summaryText").innerText;
             const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
@@ -912,13 +924,10 @@
             URL.revokeObjectURL(url);
         }
 
-        // Clear/Reset Functionality
         function clearSummary() {
-            // Reloads the page to its base URL, clearing form data and server state
             window.location.href = window.location.pathname;
         }
 
-        // Modal Toggle Functions
         function openSection(sectionId) {
             document.getElementById('infoOverlay').style.display = 'flex';
             document.getElementById('algorithm').style.display = 'none';
